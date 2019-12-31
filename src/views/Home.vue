@@ -1,16 +1,16 @@
 <template>
   <div class="home">
-    <UrbanDictionary />
+    <GeoQuiz />
   </div>
 </template>
 
 <script>
-import UrbanDictionary from "../components/UrbanDictionary";
+import GeoQuiz from "../components/GeoQuiz";
 
 export default {
   name: "home",
   components: {
-    UrbanDictionary
+    GeoQuiz
   }
 };
 </script>
