@@ -1,16 +1,36 @@
 <template>
-  <div>Hello World</div>
+  <div class="container" v-if="finishedLoading">
+    <FlagImage :country="`${quizQuestions[0].choices[0].flag}`" />
+    <!-- <div class="flex-item">
+      <img :src="`${quizQuestions[0].choices[0].flag}`" />
+    </div>
+    <div class="flex-item">
+      <img :src="`${quizQuestions[0].choices[1].flag}`" />
+    </div>
+    <div class="flex-item">
+      <img :src="`${quizQuestions[0].choices[2].flag}`" />
+    </div>
+    <div class="flex-item">
+      <img :src="`${quizQuestions[0].choices[3].flag}`" />
+    </div>-->
+  </div>
 </template>
 
 <script>
+import FlagImage from "./FlagImage";
+
 export default {
   name: "GeoQuiz",
   data() {
     return {
       europeanCountriesArr: [],
       europeanCountriesObj: {},
-      quizQuestions: []
+      quizQuestions: [],
+      finishedLoading: false,
     };
+  },
+  components: {
+    FlagImage
   },
   methods: {
     async fetchEuropeanCountries() {
@@ -28,7 +48,6 @@ export default {
           {}
         );
 
-        console.log({ europeanCountriesObj, europeanCountriesArr });
         this.europeanCountriesArr = europeanCountriesArr;
         this.europeanCountriesObj = europeanCountriesObj;
       } catch (err) {
@@ -44,32 +63,35 @@ export default {
         };
 
         const quizQuestions = this.europeanCountriesArr.map(country => {
-          const possibleChoices = [country.name];
+          const possibleChoices = { [country.name]: true };
 
-          const choices = [country, {}, {}, {}].map((val, ind) => {
-            if (!ind) return val;
+          const choices = [
+            country,
+            ...[{}, {}, {}].map(() => {
+              const selectCountry = () => {
+                const randomIndex = generateRandomNumber();
+                const randomCountry = this.europeanCountriesArr[randomIndex];
 
-            const selectCountry = () => {
-              const randomIndex = generateRandomNumber();
-              const randomCountry = this.europeanCountriesArr[randomIndex];
+                if (possibleChoices[randomCountry.name]) {
+                  return selectCountry();
+                } else {
+                  possibleChoices[randomCountry.name] = true;
+                  return randomCountry;
+                }
+              };
 
-              if (
-                possibleChoices.some(
-                  countryName => randomCountry.name === countryName
-                )
-              ) {
-                return selectCountry();
-              } else {
-                possibleChoices.push(randomCountry.name);
-                return randomCountry;
-              }
-            };
+              return selectCountry();
+            })
+          ];
 
-            return selectCountry();
-          });
-
-          console.log(choices);
+          return {
+            choices,
+            correctAnswer: country
+          };
         });
+
+        this.quizQuestions = quizQuestions;
+        this.finishedLoading = true
       } catch (err) {
         console.log(err);
       }
@@ -83,4 +105,8 @@ export default {
 </script>
 
 <style scoped>
+.container {
+  display: flex;
+  flex-wrap: wrap;
+}
 </style>
