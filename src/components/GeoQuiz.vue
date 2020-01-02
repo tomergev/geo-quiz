@@ -1,18 +1,15 @@
 <template>
-  <div class="container" v-if="finishedLoading">
-    <FlagImage :country="`${quizQuestions[0].choices[0].flag}`" />
-    <!-- <div class="flex-item">
-      <img :src="`${quizQuestions[0].choices[0].flag}`" />
+  <div v-if="quizQuestions.length">
+    <h2>{{quizQuestions[currentQuestionInd].find(correctAnswer).name}}'s flag?</h2>
+    <div class="container">
+      <div
+        v-for="country in quizQuestions[currentQuestionInd]"
+        :key="country.name"
+        class="flex-item"
+      >
+        <FlagImage :country="country" v-on:selected-answer="selectedAnswer" />
+      </div>
     </div>
-    <div class="flex-item">
-      <img :src="`${quizQuestions[0].choices[1].flag}`" />
-    </div>
-    <div class="flex-item">
-      <img :src="`${quizQuestions[0].choices[2].flag}`" />
-    </div>
-    <div class="flex-item">
-      <img :src="`${quizQuestions[0].choices[3].flag}`" />
-    </div>-->
   </div>
 </template>
 
@@ -23,15 +20,13 @@ export default {
   name: "GeoQuiz",
   data() {
     return {
-      europeanCountriesArr: [],
-      europeanCountriesObj: {},
       quizQuestions: [],
-      finishedLoading: false,
+      currentQuestionInd: 0,
+      europeanCountriesArr: [],
+      europeanCountriesObj: {}
     };
   },
-  components: {
-    FlagImage
-  },
+  components: { FlagImage },
   methods: {
     async fetchEuropeanCountries() {
       try {
@@ -62,11 +57,23 @@ export default {
           return Math.floor(Math.random() * (max - min + 1)) + min;
         };
 
-        const quizQuestions = this.europeanCountriesArr.map(country => {
+        const shuffleArray = array => {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+
+          return array;
+        };
+
+        this.quizQuestions = this.europeanCountriesArr.map(country => {
           const possibleChoices = { [country.name]: true };
 
           const choices = [
-            country,
+            {
+              ...country,
+              correctAnswer: true
+            },
             ...[{}, {}, {}].map(() => {
               const selectCountry = () => {
                 const randomIndex = generateRandomNumber();
@@ -76,7 +83,10 @@ export default {
                   return selectCountry();
                 } else {
                   possibleChoices[randomCountry.name] = true;
-                  return randomCountry;
+                  return {
+                    ...randomCountry,
+                    correctAnswer: false
+                  };
                 }
               };
 
@@ -84,17 +94,16 @@ export default {
             })
           ];
 
-          return {
-            choices,
-            correctAnswer: country
-          };
+          const choicesShuffled = shuffleArray(choices);
+          return choicesShuffled;
         });
-
-        this.quizQuestions = quizQuestions;
-        this.finishedLoading = true
       } catch (err) {
         console.log(err);
       }
+    },
+    selectedAnswer(selectedCountry) {},
+    correctAnswer(country) {
+      if (country.correctAnswer) return country;
     }
   },
   async created() {
@@ -108,5 +117,9 @@ export default {
 .container {
   display: flex;
   flex-wrap: wrap;
+}
+
+.flex-item {
+  flex-basis: 50%;
 }
 </style>
