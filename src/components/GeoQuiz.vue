@@ -1,13 +1,21 @@
 <template>
   <div v-if="quizQuestions.length">
     <h2>{{quizQuestions[currentQuestionInd].find(correctAnswer).name}}'s flag?</h2>
+
+    <div v-if="Object.keys(this.previouslySelectedAnswer).length">
+      <h2 v-if="this.previouslySelectedAnswer.correctAnswer">Correct!</h2>
+      <h2 v-else>That's incorrect, you chose {{this.previouslySelectedAnswer.name}}</h2>
+
+      <button @click="nextQuestion">Next Question</button>
+    </div>
+
     <div class="container">
       <div
         v-for="country in quizQuestions[currentQuestionInd]"
         :key="country.name"
         class="flex-item"
       >
-        <FlagImage :country="country" v-on:selected-answer="selectedAnswer" />
+        <FlagImage :country="country" />
       </div>
     </div>
   </div>
@@ -23,7 +31,8 @@ export default {
       quizQuestions: [],
       currentQuestionInd: 0,
       europeanCountriesArr: [],
-      europeanCountriesObj: {}
+      europeanCountriesObj: {},
+      previouslySelectedAnswer: {}
     };
   },
   components: { FlagImage },
@@ -66,7 +75,7 @@ export default {
           return array;
         };
 
-        this.quizQuestions = this.europeanCountriesArr.map(country => {
+        const quizQuestions = this.europeanCountriesArr.map(country => {
           const possibleChoices = { [country.name]: true };
 
           const choices = [
@@ -94,9 +103,10 @@ export default {
             })
           ];
 
-          const choicesShuffled = shuffleArray(choices);
-          return choicesShuffled;
+          return shuffleArray(choices);
         });
+
+        this.quizQuestions = shuffleArray(quizQuestions);
       } catch (err) {
         console.log(err);
       }
@@ -104,11 +114,20 @@ export default {
     selectedAnswer(selectedCountry) {},
     correctAnswer(country) {
       if (country.correctAnswer) return country;
+    },
+    nextQuestion() {
+      this.previouslySelectedAnswer = {};
+      this.currentQuestionInd += 1;
     }
   },
   async created() {
     await this.fetchEuropeanCountries();
     await this.createQuizQuestions();
+  },
+  mounted() {
+    this.$root.$on("on-selection", selectedCountry => {
+      this.previouslySelectedAnswer = selectedCountry;
+    });
   }
 };
 </script>
